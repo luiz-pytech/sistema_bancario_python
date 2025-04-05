@@ -1,8 +1,9 @@
 # Toda modelagem inicial do sistema bancário utilizado POO.
 from abc import ABC, abstractmethod
 from datetime import datetime
+import random
 
-# Essa classe foi criada na necessidade de usar o login e não usar varíaveis globais para guardar clientes e contas
+# Essa classe BANCO foi criada na necessidade de usar o login e não usar varíaveis globais para guardar clientes e contas
 
 
 class Banco:
@@ -24,6 +25,12 @@ class Banco:
                 return c
         return False
 
+    def buscar_contas(self, numero_conta):
+        for conta in self.contas:
+            if (conta.numero_conta == numero_conta):
+                return conta
+        return False
+
     def cadastrar_cliente(self, cliente):
         self._clientes.append(cliente)
 
@@ -38,10 +45,14 @@ class Cliente:
         self._contas = []
 
     def realizar_transacao(self, conta, transacao):
-        transacao.registrar(conta)
+        transacao.registrar_transacao(conta)
 
     def adicionar_conta(self, conta):
         self._contas.append(conta)
+
+    @property
+    def contas(self):
+        return self._contas
 
 
 class PessoaFisica(Cliente):
@@ -118,13 +129,28 @@ class Conta:
         print("---- Número Informado é inválido para transação! ----")
         return False
 
+    def pix(self, valor, conta_destino):
+        if (valor > self.saldo):
+            print("---- Você não tem saldo suficiente ----")
+            return False
+
+        if (valor > 0):
+            self._saldo -= valor
+            conta_destino._saldo += valor
+            print("==== Pix realizado com sucesso! ====")
+            return True
+
+        print("---- Número Informado é inválido para transação! ----")
+        return False
+
 
 class ContaCorrente(Conta):
-    def __init__(self, numero_conta, cliente, limite=500, limite_saques=3):
+    def __init__(self, numero_conta, cliente, limite=500, limite_saques=3, limite_pix=1000):
         super().__init__(numero_conta, cliente)
         self.limite = limite
         self.limite_saques = limite_saques
         self.qnt_saques_realizados = 0
+        self.limite_pix = limite_pix
 
     def sacar(self, valor):
         if (valor > self.limite):
@@ -138,11 +164,18 @@ class ContaCorrente(Conta):
 
         return False
 
+    def pix(self, valor, conta_destino):
+        if (valor > self.limite_pix):
+            print("---- Valor maior que o limite do saque! ----")
+            return False
+
+        return super().pix(valor, conta_destino)
+
     def __str__(self):
         return f"""\
             Agência:\t{self._AGENCIA}
             C/C:\t\t{self._numero_conta}
-            Titular:\t{self.cliente._nome}
+            Titular:\t{self.cliente.nome}
             Saldo: \t\t  R${self._saldo}
         """
 
@@ -201,6 +234,28 @@ class Deposito(Transacao):
             return True
         return False
 
+
+class Pix(Transacao):
+    def __init__(self, valor, conta_destino):
+        super().__init__()
+        self._valor = valor
+        self._conta_destino = conta_destino
+
+    @property
+    def valor(self):
+        return self._valor
+
+    @property
+    def conta_destino(self):
+        return self._conta_destino
+
+    def registrar_transacao(self, conta_envio):
+        if conta_envio.pix(self._valor, self._conta_destino):
+            conta_envio.historico.adicionar_transacao(self)
+            self.conta_destino.historico.adicionar_transacao(self)
+            return True
+        return False
+
 ### Funções de amostragem de menus ###
 
 
@@ -214,13 +269,14 @@ def login_banco():
     return login
 
 
-def menu_operacores():
+def menu_operacoes():
     menu = """
 [d] Depositar dinheiro
 [s] Sacar dinheiro
 [v] Visualizar extrato bancário
 [c] Criar nova conta
 [l] Listar contas
+[p] Pix
 [e] Exit
 
 => """
@@ -251,33 +307,220 @@ def fazer_login(banco):
     cpf = input("\nInforme o CPF: \n==> ")
     cliente = banco.buscar_cliente(cpf)
     if cliente:
-        print(f"======= BEM VINDO {cliente.nome.upper()} =======")
-        return True
+        print(f"\n======= BEM VINDO {cliente.nome.upper()} =======")
+        return cliente
 
     print("##### CLIENTE NÃO CADASTRADO! #####")
     return False
 
 
+# Operações do menu interno do BANCO (depositar, sacar, visualizar extrato)
+
+def depositar_dinheiro(cliente):
+    if not cliente._contas:
+        print(
+            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+        return
+    else:
+        conta = cliente.contas[0]
+        if len(cliente.contas) > 1:
+            i = 1
+            for conta in cliente._contas:
+                print(
+                    f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+                i += 1
+        # Conta para realizar a transacao
+        num_conta_transacao = int(input(
+            "\nInforme o número da conta pra transacao: \n ==> ")) - 1
+        conta = cliente._contas[num_conta_transacao]
+        if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
+            print("Número de conta inválido!")
+            return
+
+    valor_deposito = float(input("\nInforme o valor para depósito: \n==>"))
+    transacao = Deposito(valor_deposito)
+    if (cliente.realizar_transacao(conta, transacao)):
+        print("===== DEPÓSITO REALIZADO COM SUCESSO =====")
+
+
+def sacar_dinheiro(cliente):
+
+    if not cliente._contas:
+        print(
+            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+        return
+    else:
+        conta = cliente.contas[0]
+        if len(cliente.contas) > 1:
+            i = 1
+            for conta in cliente._contas:
+                print(
+                    f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+                i += 1
+    # Conta para realizar a transacao
+        num_conta_transacao = int(input(
+            "\nInforme o número da conta pra transacao: \n ==> ")) - 1
+        conta = cliente._contas[num_conta_transacao]
+        if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
+            print("Número de conta inválido!")
+            return
+
+    valor_saque = float(input("\nInforme o valor para saque: \n==> "))
+
+    transacao = Saque(valor_saque)
+    if (cliente.realizar_transacao(conta, transacao)):
+        print("===== Saque realizado com sucesso =====")
+
+
+def visualizar_extrato(cliente):
+    if not cliente.contas:
+        print(
+            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+        return
+    else:
+        conta = cliente.contas[0]
+        if len(cliente.contas) > 1:
+            i = 1
+            for conta in cliente.contas:
+                print(
+                    f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+                i = i + 1
+        # Conta para realizar a transacao
+        num_conta_transacao = int(input(
+            "\nInforme o número da conta pra transacao: \n ==> ")) - 1
+        conta = cliente._contas[num_conta_transacao]
+        if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
+            print("Número de conta inválido!")
+            return
+
+    print("============ EXTRATO BANCÁRIO ===========")
+    extrato = ""
+    transacoes = conta.historico.transacoes
+    if not transacoes:
+        extrato = "Nenhuma transação realizada."
+    else:
+        for t in transacoes:
+            extrato += (f"\n{t['data']} - {t['tipo']}: R${t['valor']:.2f}")
+    print(extrato)
+    print(f"\nSaldo: R$ {conta.saldo:.2f}")
+    print("==========================================")
+
+
+def criar_nova_conta(cliente, banco):
+    conta = ContaCorrente.nova_conta(cliente, str(random.randint(1000, 9999)))
+    banco.cadastrar_conta(conta)
+
+    print("#### NOVA CONTA CADASTRADA COM SUCESSO ####")
+
+
+def listar_contas(cliente):
+    if not cliente.contas:
+        print(
+            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+        return
+    else:
+        print("======= MINHAS CONTAS =======")
+        for conta in cliente.contas:
+            print(
+                f"Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+
+
+def enviar_pix(cliente, banco):
+    # numero da conta de destino
+    numero_conta = str(input("Informe o numero da conta de destino: \n==> "))
+    conta_destino = banco.buscar_contas(
+        numero_conta)  # recuperando conta destino
+    if not conta_destino:
+        print("----- CONTA NÃO EXISTENTE! -----")  # Testando existência
+    else:
+        if not cliente._contas:
+            print(
+                f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+            return
+        else:
+            print("Seleciona a conta para fazer sua operação: \n")
+            if len(cliente.contas) > 1:
+                i = 1
+                for conta in cliente._contas:
+                    print(
+                        f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+                    i += 1
+            num_conta_transacao = int(input(
+                "\n==> ")) - 1
+            conta_envio = cliente._contas[num_conta_transacao]
+            if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
+                print("Número de conta inválido!")
+                return
+
+    valor_pix = float(input("Informe o valor: \n==> "))
+    transacao = Pix(valor_pix, conta_destino)
+    if (cliente.realizar_transacao(conta_envio, transacao)):
+        print("===== Pix realizado com sucesso! =====")
+
+
 def main():
     banco = Banco()
+
+    # Cliente 1
+    cliente1 = PessoaFisica(
+        endereco="Rua A, 123 - Centro - São Paulo/SP",
+        cpf="12345678901",
+        nome="João Silva",
+        data_nascimento="15/05/1980"
+    )
+
+    # Cliente 2
+    cliente2 = PessoaFisica(
+        endereco="Av. B, 456 - Jardim - Rio de Janeiro/RJ",
+        cpf="98765432109",
+        nome="Maria Oliveira",
+        data_nascimento="20/11/1990"
+    )
+
+    banco.cadastrar_cliente(cliente1)
+    banco.cadastrar_cliente(cliente2)
+    conta1 = ContaCorrente(
+        numero_conta="1001",
+        cliente=cliente1
+    )
+
+    # Conta para Maria
+    conta2 = ContaCorrente(
+        numero_conta="1002",
+        cliente=cliente2,
+        limite=1000  # Limite especial
+    )
+    conta3 = ContaCorrente(
+        numero_conta="1003",
+        cliente=cliente2,
+        limite=200
+    )
+
+    banco.cadastrar_conta(conta1)
+    banco.cadastrar_conta(conta2)
+    banco.cadastrar_conta(conta3)
+
     while True:
-        login_opcao = input(login_banco())
+        login_opcao = input(login_banco()).lower()
         if (login_opcao == "e"):
-            if fazer_login(banco):
+            cliente_logged = fazer_login(banco)
+            if cliente_logged:
                 logged = True
                 while logged:
-                    opcao_operacao = input(menu_operacores())
+                    opcao_operacao = input(menu_operacoes()).lower()
 
                     if (opcao_operacao == "d"):
-                        pass
+                        depositar_dinheiro(cliente_logged)
                     elif (opcao_operacao == "s"):
-                        pass
+                        sacar_dinheiro(cliente_logged)
                     elif (opcao_operacao == "v"):
-                        pass
+                        visualizar_extrato(cliente_logged)
                     elif (opcao_operacao == "c"):
-                        pass
+                        criar_nova_conta(cliente_logged, banco)
                     elif (opcao_operacao == "l"):
-                        pass
+                        listar_contas(cliente_logged)
+                    elif (opcao_operacao == "p"):
+                        enviar_pix(cliente_logged, banco)
                     elif (opcao_operacao == "e"):
                         logged = False
         elif (login_opcao == "c"):
