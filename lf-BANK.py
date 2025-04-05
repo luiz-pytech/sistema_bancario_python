@@ -2,6 +2,35 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+# Essa classe foi criada na necessidade de usar o login e não usar varíaveis globais para guardar clientes e contas
+
+
+class Banco:
+    def __init__(self):
+        self._clientes = []
+        self._contas = []
+
+    @property
+    def clientes(self):
+        return self._clientes
+
+    @property
+    def contas(self):
+        return self._contas
+
+    def buscar_cliente(self, cpf):
+        for c in self.clientes:
+            if (c.cpf == cpf):
+                return c
+        return False
+
+    def cadastrar_cliente(self, cliente):
+        self._clientes.append(cliente)
+
+    def cadastrar_conta(self, conta):
+        self._contas.append(conta)
+        conta.cliente.adicionar_conta(conta)
+
 
 class Cliente:
     def __init__(self, endereco):
@@ -21,6 +50,14 @@ class PessoaFisica(Cliente):
         self._cpf = cpf
         self._nome = nome
         self._data_nascimento = data_nascimento
+
+    @property
+    def cpf(self):
+        return self._cpf
+
+    @property
+    def nome(self):
+        return self._nome
 
 
 class Conta:
@@ -163,3 +200,90 @@ class Deposito(Transacao):
             conta.historico.adicionar_transacao(self)
             return True
         return False
+
+### Funções de amostragem de menus ###
+
+
+def login_banco():
+    login = """
+[e] Entrar
+[c] Cadastrar
+[s] Sair
+
+==> """
+    return login
+
+
+def menu_operacores():
+    menu = """
+[d] Depositar dinheiro
+[s] Sacar dinheiro
+[v] Visualizar extrato bancário
+[c] Criar nova conta
+[l] Listar contas
+[e] Exit
+
+=> """
+
+    return menu
+
+# Funções do menu de login
+
+
+def cadastrar_cliente(banco):
+    print("\n====== CADASTRO DE CLIENTE ======\n")
+    cpf = input("CPF:")
+
+    if (banco.buscar_cliente(cpf)):
+        print("------ Cliente já cadastrado ------")
+        return
+    nome = input("Nome completo: ")
+    data_nascimento = input("Data de nascimento (dd/mm/aaaa): ")
+    endereco = input(
+        "Endereço (logradouro, nro - bairro - cidade/sigla estado): ")
+
+    cliente = PessoaFisica(endereco, cpf, nome, data_nascimento)
+    banco.cadastrar_cliente(cliente)
+    print("\n##### Cliente Cadastrado com sucesso #####")
+
+
+def fazer_login(banco):
+    cpf = input("\nInforme o CPF: \n==> ")
+    cliente = banco.buscar_cliente(cpf)
+    if cliente:
+        print(f"======= BEM VINDO {cliente.nome.upper()} =======")
+        return True
+
+    print("##### CLIENTE NÃO CADASTRADO! #####")
+    return False
+
+
+def main():
+    banco = Banco()
+    while True:
+        login_opcao = input(login_banco())
+        if (login_opcao == "e"):
+            if fazer_login(banco):
+                logged = True
+                while logged:
+                    opcao_operacao = input(menu_operacores())
+
+                    if (opcao_operacao == "d"):
+                        pass
+                    elif (opcao_operacao == "s"):
+                        pass
+                    elif (opcao_operacao == "v"):
+                        pass
+                    elif (opcao_operacao == "c"):
+                        pass
+                    elif (opcao_operacao == "l"):
+                        pass
+                    elif (opcao_operacao == "e"):
+                        logged = False
+        elif (login_opcao == "c"):
+            cadastrar_cliente(banco)
+        elif (login_opcao == "s"):
+            exit("----- FINALIZANDO O PROGRAMA! -----")
+
+
+main()
