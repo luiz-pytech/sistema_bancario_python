@@ -111,7 +111,7 @@ class Conta:
 
         elif (valor > 0):
             self._saldo -= valor
-            print("==== Saque realizado com sucesso! ====")
+            print("✅✅✅ Saque realizado com sucesso! ✅✅✅")
             return True
 
         else:
@@ -123,7 +123,7 @@ class Conta:
 
         if (valor > 0):
             self._saldo += valor
-            print("==== Valor depositado com Sucesso! ====")
+            print("✅✅✅ Valor depositado com Sucesso! ✅✅✅")
             return True
 
         print("---- Número Informado é inválido para transação! ----")
@@ -137,7 +137,7 @@ class Conta:
         if (valor > 0):
             self._saldo -= valor
             conta_destino._saldo += valor
-            print("==== Pix realizado com sucesso! ====")
+            print("✅✅✅ Pix realizado com sucesso! ✅✅✅")
             return True
 
         print("---- Número Informado é inválido para transação! ----")
@@ -261,24 +261,30 @@ class Pix(Transacao):
 
 def login_banco():
     login = """
-[e] Entrar
-[c] Cadastrar
-[s] Sair
-
-==> """
+┌──────────────────────────┐
+│        LF BANK           │
+├──────────────────────────┤
+│ [e] Entrar na conta      │
+│ [c] Criar conta          │
+│ [s] Sair do sistema      │
+└──────────────────────────┘
+=> """
     return login
 
 
 def menu_operacoes():
     menu = """
-[d] Depositar dinheiro
-[s] Sacar dinheiro
-[v] Visualizar extrato bancário
-[c] Criar nova conta
-[l] Listar contas
-[p] Pix
-[e] Exit
-
+┌──────────────────────────┐
+│    MENU PRINCIPAL        │
+├──────────────────────────┤
+│ [d] Depositar            │
+│ [s] Sacar                │
+│ [v] Ver extrato          │
+│ [p] Transferir via PIX   │
+│ [c] Nova conta           │
+│ [l] Minhas contas        │
+│ [e] Sair da conta        │
+└──────────────────────────┘
 => """
 
     return menu
@@ -287,11 +293,13 @@ def menu_operacoes():
 
 
 def cadastrar_cliente(banco):
-    print("\n====== CADASTRO DE CLIENTE ======\n")
+    print("\n╔════════════════════════════╗")
+    print("║    CADASTRO DE CLIENTE     ║")
+    print("╚════════════════════════════╝")
     cpf = input("CPF:")
 
     if (banco.buscar_cliente(cpf)):
-        print("------ Cliente já cadastrado ------")
+        print("\n⚠️⚠️⚠️ Cliente já cadastrado ⚠️⚠️⚠️")
         return
     nome = input("Nome completo: ")
     data_nascimento = input("Data de nascimento (dd/mm/aaaa): ")
@@ -300,17 +308,18 @@ def cadastrar_cliente(banco):
 
     cliente = PessoaFisica(endereco, cpf, nome, data_nascimento)
     banco.cadastrar_cliente(cliente)
-    print("\n##### Cliente Cadastrado com sucesso #####")
+    print("\n✅✅✅ CLIENTE CADASTRADO COM SUCESSO ✅✅✅")
+    print("SEJA BEM-VINDO AO LF BANK!")
 
 
 def fazer_login(banco):
     cpf = input("\nInforme o CPF: \n==> ")
     cliente = banco.buscar_cliente(cpf)
     if cliente:
-        print(f"\n======= BEM VINDO {cliente.nome.upper()} =======")
+        print(f"\n ✨ Olá, {cliente.nome.upper()} ✨")
         return cliente
 
-    print("##### CLIENTE NÃO CADASTRADO! #####")
+    print("⚠️⚠️⚠️ CLIENTE NÃO CADASTRADO! ⚠️⚠️⚠️")
     return False
 
 
@@ -319,9 +328,12 @@ def fazer_login(banco):
 def depositar_dinheiro(cliente):
     if not cliente._contas:
         print(
-            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+            f"⚠️⚠️⚠️ {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! ⚠️⚠️⚠️")
         return
     else:
+        print("\n╔════════════════════════════╗")
+        print("║        DEPÓSITO            ║")
+        print("╚════════════════════════════╝")
         conta = cliente.contas[0]
         if len(cliente.contas) > 1:
             i = 1
@@ -334,22 +346,25 @@ def depositar_dinheiro(cliente):
             "\nInforme o número da conta pra transacao: \n ==> ")) - 1
         conta = cliente._contas[num_conta_transacao]
         if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
-            print("Número de conta inválido!")
+            print("⚠️⚠️⚠️ Número de conta inválido! ⚠️⚠️⚠️")
             return
 
     valor_deposito = float(input("\nInforme o valor para depósito: \n==>"))
     transacao = Deposito(valor_deposito)
     if (cliente.realizar_transacao(conta, transacao)):
-        print("===== DEPÓSITO REALIZADO COM SUCESSO =====")
+        print("✅✅✅ DEPÓSITO REALIZADO COM SUCESSO! ✅✅✅")
 
 
 def sacar_dinheiro(cliente):
 
     if not cliente._contas:
         print(
-            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+            f"⚠️⚠️⚠️ {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! ⚠️⚠️⚠️")
         return
     else:
+        print("\n╔════════════════════════════╗")
+        print("║          SAQUE             ║")
+        print("╚════════════════════════════╝")
         conta = cliente.contas[0]
         if len(cliente.contas) > 1:
             i = 1
@@ -362,67 +377,74 @@ def sacar_dinheiro(cliente):
             "\nInforme o número da conta pra transacao: \n ==> ")) - 1
         conta = cliente._contas[num_conta_transacao]
         if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
-            print("Número de conta inválido!")
+            print("⚠️⚠️⚠️ Número de conta inválido! ⚠️⚠️⚠️")
             return
 
     valor_saque = float(input("\nInforme o valor para saque: \n==> "))
 
     transacao = Saque(valor_saque)
     if (cliente.realizar_transacao(conta, transacao)):
-        print("===== Saque realizado com sucesso =====")
+        print("✅✅✅ Saque realizado com sucesso ✅✅✅")
 
 
 def visualizar_extrato(cliente):
     if not cliente.contas:
         print(
-            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+            f"⚠️⚠️⚠️ {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! ⚠️⚠️⚠️")
         return
-    else:
+    elif len(cliente.contas) == 1:
         conta = cliente.contas[0]
-        if len(cliente.contas) > 1:
-            i = 1
-            for conta in cliente.contas:
-                print(
-                    f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
-                i = i + 1
+    elif len(cliente.contas) > 1:
+        i = 1
+        for conta in cliente.contas:
+            print(
+                f"[{i}] - Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+            i = i + 1
         # Conta para realizar a transacao
         num_conta_transacao = int(input(
             "\nInforme o número da conta pra transacao: \n ==> ")) - 1
         conta = cliente._contas[num_conta_transacao]
         if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
-            print("Número de conta inválido!")
+            print("⚠️⚠️⚠️ Número de conta inválido! ⚠️⚠️⚠️")
             return
 
-    print("============ EXTRATO BANCÁRIO ===========")
+    print("\n╔════════════════════════════════════╗")
+    print("║            EXTRATO                 ║")
+    print("╠════════════════════════════════════╣")
     extrato = ""
     transacoes = conta.historico.transacoes
     if not transacoes:
-        extrato = "Nenhuma transação realizada."
+        extrato = "  Nenhuma transação realizada."
     else:
         for t in transacoes:
             extrato += (f"\n{t['data']} - {t['tipo']}: R${t['valor']:.2f}")
     print(extrato)
     print(f"\nSaldo: R$ {conta.saldo:.2f}")
-    print("==========================================")
+    print("\n\n╚════════════════════════════════════╝")
 
 
 def criar_nova_conta(cliente, banco):
     conta = ContaCorrente.nova_conta(cliente, str(random.randint(1000, 9999)))
     banco.cadastrar_conta(conta)
 
-    print("#### NOVA CONTA CADASTRADA COM SUCESSO ####")
+    print("✅✅✅ NOVA CONTA CADASTRADA COM SUCESSO ✅✅✅")
 
 
 def listar_contas(cliente):
     if not cliente.contas:
         print(
-            f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+            f"⚠️⚠️⚠️ {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! ⚠️⚠️⚠️")
         return
     else:
-        print("======= MINHAS CONTAS =======")
+        print("\n╔════════════════════════════╗")
+        print("║     SUAS CONTAS            ║")
+        print("╠════════════════════════════╣")
         for conta in cliente.contas:
-            print(
-                f"Número da conta: {conta.numero_conta} -- Saldo R$: {conta.saldo}")
+            print(f"  ➤ Conta: {conta.numero_conta}")
+            print(f"    Agência: {conta.agencia}")
+            print(f"    Saldo: R$ {conta.saldo:.2f}")
+            print("╟────────────────────────────╢")
+        print("╚════════════════════════════╝")
 
 
 def enviar_pix(cliente, banco):
@@ -431,13 +453,16 @@ def enviar_pix(cliente, banco):
     conta_destino = banco.buscar_contas(
         numero_conta)  # recuperando conta destino
     if not conta_destino:
-        print("----- CONTA NÃO EXISTENTE! -----")  # Testando existência
+        print("⚠️⚠️⚠️ CONTA NÃO EXISTENTE! ⚠️⚠️⚠️")  # Testando existência
     else:
         if not cliente._contas:
             print(
-                f"----- {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! -----")
+                f"⚠️⚠️⚠️ {cliente._nome} você não tem conta cadastrada, é necessário criar uma conta! ⚠️⚠️⚠️")
             return
         else:
+            print("\n╔════════════════════════════╗")
+            print("║    TRANSFERÊNCIA PIX       ║")
+            print("╚════════════════════════════╝")
             print("Seleciona a conta para fazer sua operação: \n")
             if len(cliente.contas) > 1:
                 i = 1
@@ -449,13 +474,13 @@ def enviar_pix(cliente, banco):
                 "\n==> ")) - 1
             conta_envio = cliente._contas[num_conta_transacao]
             if (num_conta_transacao < 0 or num_conta_transacao > len(cliente._contas)):
-                print("Número de conta inválido!")
+                print("⚠️⚠️⚠️ Número de conta inválido! ⚠️⚠️⚠️")
                 return
 
     valor_pix = float(input("Informe o valor: \n==> "))
     transacao = Pix(valor_pix, conta_destino)
     if (cliente.realizar_transacao(conta_envio, transacao)):
-        print("===== Pix realizado com sucesso! =====")
+        print("✅✅✅ Pix realizado com sucesso! ✅✅✅")
 
 
 def main():
